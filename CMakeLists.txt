@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(ALGO)
+
+aux_source_directory(. DIR)
+
+SET(CMAKE_CXX_STANDARD 20)
+SET(CMAKE_CXX_STANDARD_REQUIRED True)
+
+SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+ADD_DEFINITIONS(-w)
+
+# add_library(ALGO_SHARED SHARED ${DIR})
+add_executable(ALGO ${DIR})
