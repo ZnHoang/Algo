@@ -1,3 +1,5 @@
+#ifndef HELP
+#define HELP
 
 #include <chrono>
 #include <string>
@@ -26,3 +28,5 @@ auto timingWithRet(const char* funcName, Func func)
     PRINT(funcName, used);
     return res;
 }
+
+#endif

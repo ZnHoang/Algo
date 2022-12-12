@@ -1,3 +1,6 @@
+#ifndef SORT
+#define SORT
+
 /*
 ** PROBLEMS:
 ** radixSort and bucketSort can't pass a lambda which can catch any param
@@ -10,10 +13,11 @@
 #include <algorithm>
 #include <map>
 #include <cmath>
-using std::vector, std::function, std::map;
+#include "help.hpp"
+
+using std::vector, std::function, std::map, std::bind;
 using std::swap, std::min, std::max;
 
-using timepoint = std::chrono::_V2::steady_clock::time_point;
 
 template <class T>
 class sort
@@ -26,21 +30,21 @@ private:
     void _adjustHeap(vector<T>&, uint, uint);
     void _bucketSort(vector<T>&, uint, function<uint(T)>, bool = true);
 public:
-    sort(const int, function<bool(const T&, const T&)>, function<bool(const T&, const T&)>, function<uint(const T&)>);
+    sort(function<bool(const T&, const T&)>, function<bool(const T&, const T&)>, function<uint(const T&)>);
     ~sort();
-    void createDatas(uint);
+    // void createDatas(uint, bool=false);
     void createDatas(vector<T>&);
-    void builtSort();
-    void bubbleSort();
-    void insertSort();
-    void selectSort();
-    void shellSort();
-    void quickSort();
-    void mergeSort();
-    void heapSort();
-    void countingSort();
-    void bucketSort();
-    void radixSort();
+    void builtSort(bool=false);
+    void bubbleSort(bool=false);
+    void insertSort(bool=false);
+    void selectSort(bool=false);
+    void shellSort(bool=false);
+    void quickSort(bool=false);
+    void mergeSort(bool=false);
+    void heapSort(bool=false);
+    void countingSort(bool=false);
+    void bucketSort(bool=false);
+    void radixSort(bool=false);
     void allSort();
 private:
     vector<T> vDatas;
@@ -51,16 +55,12 @@ private:
     const uint DEFAULTSIZE = 50000;
     const uint MAXDATA = 1000000;
     std::chrono::nanoseconds BUILT_TIME;
-    inline timepoint NOW() {return std::chrono::steady_clock::now();}
-    inline std::chrono::nanoseconds USED(timepoint end, timepoint begin) {return std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);}
-    inline void PRINT(const char* func, const std::chrono::nanoseconds time, bool res) {printf("\033[33m%-20s%-20.8f%-+20.8f%-20s\n\033[0m", (func), time.count() * 1e-9, (BUILT_TIME - time).count() * 1e-9, res?"TRUE":"FALSE");}
 };
 
 template <class T>
-sort<T>::sort(const int size, function<bool(const T&, const T&)> cmp, function<bool(const T&, const T&)> hash, function<uint(const T&)> getMaxBit)
+sort<T>::sort(function<bool(const T&, const T&)> cmp, function<bool(const T&, const T&)> hash, function<uint(const T&)> getMaxBit)
     : cmp(cmp), hash(hash), getMaxBit(getMaxBit)
 {
-    createDatas(size > 5 ? size : DEFAULTSIZE);
 }
 
 template <class T>
@@ -68,20 +68,25 @@ sort<T>::~sort()
 {
 }
 
-template <class T>
-void sort<T>::createDatas(uint size)
-{
-    vector<T> temp{};
-    vDatas.swap(temp);
+// template <class T>
+// void sort<T>::createDatas(uint size, bool needTiming)
+// {
+//     if(needTiming)
+//     {
+//         timing(__FUNCTION__, bind(&sort::createDatas, this, size, false));
+//     }
+//     else
+//     {
+//         vector<T> temp{};
+//         vDatas.swap(temp);
 
-    auto begin = NOW();
-    srand((int)time(0));
-    for(uint i = 0; i < size; i++)
-    {
-        vDatas.emplace_back(rand() % MAXDATA);
-    }
-    printf("\033[33m%s\t%.8fs\t%d\n\033[0m", __FUNCTION__, USED(NOW(), begin).count() * 1e-9, size);
-}
+//         srand((int)time(0));
+//         for(uint i = 0; i < size; i++)
+//         {
+//             vDatas.emplace_back(rand() % MAXDATA);
+//         }
+//     }
+// }
 
 template <class T>
 void sort<T>::createDatas(vector<T>& datas)
@@ -103,38 +108,47 @@ bool sort<T>::check(vector<T>& vDatas)
 }
 
 template <class T>
-void sort<T>::builtSort()
+void sort<T>::builtSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-    std::sort(vDatas.begin(), vDatas.end(), cmp);
-    BUILT_TIME = USED(NOW(), begin);
-    printf("\033[33m%-20s%-20.8f\n\033[0m", __FUNCTION__, BUILT_TIME.count() * 1e-9);
+    if(needTiming)
+    {
+        timing(__FUNCTION__, bind(&sort::builtSort, this, false));
+    }
+    else
+    {
+        auto vDatas = this->vDatas;
+        auto begin = NOW;
+        std::sort(vDatas.begin(), vDatas.end(), cmp);
+        BUILT_TIME = USED(NOW, begin);
+    }
 }
 
 template <class T>
-void sort<T>::bubbleSort()
+void sort<T>::bubbleSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-
-    uint flag = vDatas.size();
-    while(flag > 0)
+    if(needTiming)
     {
-        uint k = flag;
-        flag = 0;
-        for(uint j = 1; j < k; j++)
+        timing(__FUNCTION__, bind(&sort::bubbleSort, this, false));
+    }
+    else
+    {
+        auto vDatas = this->vDatas;
+
+        uint flag = vDatas.size();
+        while(flag > 0)
         {
-            if(!cmp(vDatas[j - 1], vDatas[j]))
+            uint k = flag;
+            flag = 0;
+            for(uint j = 1; j < k; j++)
             {
-                swap(vDatas[j - 1], vDatas[j]);
-                flag = j;
+                if(!cmp(vDatas[j - 1], vDatas[j]))
+                {
+                    swap(vDatas[j - 1], vDatas[j]);
+                    flag = j;
+                }
             }
         }
     }
-
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
 }
 
 template <class T>
@@ -153,51 +167,62 @@ void sort<T>::_insertSort(vector<T>& vDatas, uint start, uint step)
 }
 
 template <class T>
-void sort<T>::insertSort()
+void sort<T>::insertSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-    _insertSort(vDatas);
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+    if(needTiming)
+    {
+        timing(__FUNCTION__, bind(&sort::insertSort, this, false));
+    }
+    else
+    {
+        auto vDatas = this->vDatas;
+        _insertSort(vDatas);
+    }
 }
 
 template <class T>
-void sort<T>::selectSort()
+void sort<T>::selectSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-
-    for(uint i = 0; i < vDatas.size() - 1; i++)
+    if(needTiming)
     {
-        auto minIdx = i;
-        for(uint j = i + 1; j < vDatas.size(); j++)
+        timing(__FUNCTION__, bind(&sort::selectSort, this, false));
+    }
+    else
+    {
+        auto vDatas = this->vDatas;
+
+        for(uint i = 0; i < vDatas.size() - 1; i++)
         {
-            if(cmp(vDatas[j], vDatas[minIdx]))
+            auto minIdx = i;
+            for(uint j = i + 1; j < vDatas.size(); j++)
             {
-                minIdx = j;
+                if(cmp(vDatas[j], vDatas[minIdx]))
+                {
+                    minIdx = j;
+                }
             }
+            swap(vDatas[i], vDatas[minIdx]);
         }
-        swap(vDatas[i], vDatas[minIdx]);
-    }
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+    }
 }
 
 template <class T>
-void sort<T>::shellSort()
+void sort<T>::shellSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-
-    for(uint step = vDatas.size() / 2; step > 0; step /= 2)
+    if(needTiming)
     {
-        _insertSort(vDatas, step, step);
+        timing(__FUNCTION__, bind(&sort::shellSort, this, false));
     }
+    else
+    {
+        auto vDatas = this->vDatas;
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+        for(uint step = vDatas.size() / 2; step > 0; step /= 2)
+        {
+            _insertSort(vDatas, step, step);
+        }
+    }
 }
 
 template <class T>
@@ -234,13 +259,17 @@ void sort<T>::_quickSort(vector<T>& vDatas, uint left, uint right)
 }
 
 template <class T>
-void sort<T>::quickSort()
+void sort<T>::quickSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-    _quickSort(vDatas, 0, vDatas.size() - 1);
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+    if(needTiming)
+    {
+        timing(__FUNCTION__, bind(&sort::quickSort, this, false));
+    }
+    else
+    {
+        auto vDatas = this->vDatas;
+        _quickSort(vDatas, 0, vDatas.size() - 1);
+    }
 }
 
 template <class T>
@@ -280,13 +309,17 @@ void sort<T>::_mergeSort(vector<T>& vDatas, const uint begin, const uint end)
 }
 
 template <class T>
-void sort<T>::mergeSort()
+void sort<T>::mergeSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-    _mergeSort(vDatas, 0, vDatas.size() - 1);
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+    if(needTiming)
+    {
+        timing(__FUNCTION__, bind(&sort::mergeSort, this, false));
+    }
+    else
+    {
+        auto vDatas = this->vDatas;
+        _mergeSort(vDatas, 0, vDatas.size() - 1);
+    }
 }
 
 template <class T>
@@ -314,51 +347,57 @@ void sort<T>::_adjustHeap(vector<T>& vDatas, uint idx, uint len)
 }
 
 template <class T>
-void sort<T>::heapSort()
+void sort<T>::heapSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-
-    for(int idx = vDatas.size() / 2 - 1; idx >= 0; idx--)
+    if(needTiming)
     {
-        _adjustHeap(vDatas, idx, vDatas.size());
+        timing(__FUNCTION__, bind(&sort::heapSort, this, false));
     }
-
-    for(int idx = vDatas.size() - 1; idx > 0; idx--)
+    else
     {
-        swap(vDatas[0], vDatas[idx]);
-        _adjustHeap(vDatas, 0, idx);
-    }
+        auto vDatas = this->vDatas;
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+        for(int idx = vDatas.size() / 2 - 1; idx >= 0; idx--)
+        {
+            _adjustHeap(vDatas, idx, vDatas.size());
+        }
+
+        for(int idx = vDatas.size() - 1; idx > 0; idx--)
+        {
+            swap(vDatas[0], vDatas[idx]);
+            _adjustHeap(vDatas, 0, idx);
+        }
+    }
 }
 
 template <class T>
-void sort<T>::countingSort()
+void sort<T>::countingSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-
-    map<T, uint, decltype(hash)> hashData2Cnt(hash);
-    for(auto& data : vDatas)
+    if(needTiming)
     {
-        hashData2Cnt[data]++;
+        timing(__FUNCTION__, bind(&sort::countingSort, this, false));
     }
-
-    uint curIdx = 0;
-    for(auto& p : hashData2Cnt)
+    else
     {
-        const T data = p.first;
-        uint cnt = p.second;
-        while(cnt--)
+        auto vDatas = this->vDatas;
+
+        map<T, uint, decltype(hash)> hashData2Cnt(hash);
+        for(auto& data : vDatas)
         {
-            vDatas[curIdx++] = data;
+            hashData2Cnt[data]++;
+        }
+
+        uint curIdx = 0;
+        for(auto& p : hashData2Cnt)
+        {
+            const T data = p.first;
+            uint cnt = p.second;
+            while(cnt--)
+            {
+                vDatas[curIdx++] = data;
+            }
         }
     }
-
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
 }
 
 template <class T>
@@ -388,52 +427,58 @@ void sort<T>::_bucketSort(vector<T>& vDatas, uint bucket, function<uint(T)> getB
 }
 
 template <class T>
-void sort<T>::bucketSort()
+void sort<T>::bucketSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-
-    uint cnt = vDatas.size();
-    T minData = vDatas[0], maxData = vDatas[0];
-    for(auto& data : vDatas)
+    if(needTiming)
     {
-        if(cmp(data, minData))
-        {
-            minData = data;
-        }
-        if(!cmp(data, maxData))
-        {
-            maxData = data;
-        }
+        timing(__FUNCTION__, bind(&sort::bucketSort, this, false));
     }
-    uint step = (maxData - minData) / cnt + 1;
-    uint bucket = (maxData - minData) / step + 1;
+    else
+    {
+        auto vDatas = this->vDatas;
 
-    _bucketSort(vDatas, bucket, [step, minData](T curData){return (curData - minData) / step;});
+        uint cnt = vDatas.size();
+        T minData = vDatas[0], maxData = vDatas[0];
+        for(auto& data : vDatas)
+        {
+            if(cmp(data, minData))
+            {
+                minData = data;
+            }
+            if(!cmp(data, maxData))
+            {
+                maxData = data;
+            }
+        }
+        uint step = (maxData - minData) / cnt + 1;
+        uint bucket = (maxData - minData) / step + 1;
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+        _bucketSort(vDatas, bucket, [step, minData](T curData){return (curData - minData) / step;});
+    }
 }
 
 template <class T>
-void sort<T>::radixSort()
+void sort<T>::radixSort(bool needTiming)
 {
-    auto vDatas = this->vDatas;
-    auto begin = NOW();
-
-    uint maxBit = 1;
-    for(auto& data : vDatas)
+    if(needTiming)
     {
-        maxBit = max(maxBit, getMaxBit(data));
+        timing(__FUNCTION__, bind(&sort::radixSort, this, false));
     }
-
-    for(uint bit = 1; bit <= maxBit; bit++)
+    else
     {
-        _bucketSort(vDatas, 10, [bit](T curData){return curData % (int)pow(10, bit) / (int)pow(10, bit - 1);}, false);
-    }
+        auto vDatas = this->vDatas;
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, check(vDatas));
+        uint maxBit = 1;
+        for(auto& data : vDatas)
+        {
+            maxBit = max(maxBit, getMaxBit(data));
+        }
+
+        for(uint bit = 1; bit <= maxBit; bit++)
+        {
+            _bucketSort(vDatas, 10, [bit](T curData){return curData % (int)pow(10, bit) / (int)pow(10, bit - 1);}, false);
+        }
+    }
 }
 
 template <class T>
@@ -455,3 +500,4 @@ void sort<T>::allSort()
     radixSort();
 }
 
+#endif

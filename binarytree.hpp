@@ -1,3 +1,6 @@
+#ifndef BINARYTREE
+#define BINARYTREE
+
 #include <iostream>
 #include <chrono>
 #include <ctime>
@@ -688,3 +691,5 @@ void binarytree<T>::allAlgo()
     buildMirror(true);
     buildBiSearchTree(true);
 }
+
+#endif

@@ -16,7 +16,7 @@ void _sort(const int size)
     auto cmp = [](const uint& a, const uint& b) -> bool {return a <= b;};
     auto hash = [](const uint& a, const uint& b) -> bool {return a < b;};
     auto getMaxBit = [](const uint& a) -> uint {uint maxBit = 1; while(a / (int)pow(10, maxBit)){maxBit++;} return maxBit;};
-    sort<uint>* my_sort = new sort<uint>(size, cmp, hash, getMaxBit);
+    sort<uint>* my_sort = new sort<uint>(cmp, hash, getMaxBit);
 
     my_sort->allSort();
     DONE(__FUNCTION__);

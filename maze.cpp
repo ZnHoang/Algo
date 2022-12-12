@@ -78,7 +78,7 @@ void maze::createMaze()
             tMaze[i][j].second = getWallWeight();
         }
     }
-    auto begin = NOW();
+    // auto begin = NOW();
 
     for(int i = 0; i < tMaze.size(); i++)
     {
@@ -103,8 +103,8 @@ void maze::createMaze()
         originalMaze.emplace_back(vector<cellStatu>(tMaze[row].begin() + 1, tMaze[row].end() - 1));
     }
 
-    auto used = USED(NOW(), begin);
-    printf("\033[33m%s\t%.8fs\t%d\n\033[0m", __FUNCTION__, used.count() * 1e-9, mazeSize);
+    // auto used = USED(NOW(), begin);
+    // printf("\033[33m%s\t%.8fs\t%d\n\033[0m", __FUNCTION__, used.count() * 1e-9, mazeSize);
 }
 
 void maze::showMaze(vector<vector<cellStatu>>& maze)
@@ -170,13 +170,13 @@ bool maze::_dfs(vector<vector<cellStatu>>& maze, const int& row, const int& col,
 void maze::dfs()
 {
     auto vMaze = originalMaze;
-    auto begin = NOW();
+    // auto begin = NOW();
 
     vector<cell> way;
     bool res = _dfs(vMaze, enter.first, enter.second, way);
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, res, way.size());
+    // auto used = USED(NOW(), begin);
+    // PRINT(__FUNCTION__, used, res, way.size());
     // setRealWay(vMaze, way);
     // showMaze(vMaze);
 }
@@ -214,23 +214,23 @@ bool maze::_bfs(vector<vector<cellStatu>>& maze, vector<cell>& way)
 void maze::bfs()
 {
     auto tMaze = originalMaze;
-    auto begin = NOW();
+    // auto begin = NOW();
 
     vector<cell> way;
     bool res = _bfs(tMaze, way);
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, res, way.size());
+    // auto used = USED(NOW(), begin);
+    // PRINT(__FUNCTION__, used, res, way.size());
     // setRealWay(tMaze, way);
     // showMaze(tMaze);
 }
 
 void maze::dijkstra()
 {
-    auto begin = NOW();
+    // auto begin = NOW();
 
-    auto used = USED(NOW(), begin);
-    // PRINT(__FUNCTION__, used, )
+    // auto used = USED(NOW(), begin);
+    // // PRINT(__FUNCTION__, used, )
 }
 
 weight maze::_aStar(vector<vector<cellStatu>>& maze, vector<cell>& way, bool climb = true)
@@ -285,13 +285,13 @@ weight maze::_aStar(vector<vector<cellStatu>>& maze, vector<cell>& way, bool cli
 void maze::aStar()
 {
     auto tMaze = originalMaze;
-    auto begin = NOW();
+    // auto begin = NOW();
 
     vector<cell> way;
     weight minWeight = _aStar(tMaze, way);
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used, minWeight, way.size());
+    // auto used = USED(NOW(), begin);
+    // PRINT(__FUNCTION__, used, minWeight, way.size());
     setRealWay(tMaze, way);
     showMaze(tMaze);
 }
