@@ -5,21 +5,23 @@
 #include <queue>
 #include <stack>
 #include <memory>
+#include <functional>
 #include "node.hpp"
+#include "help.hpp"
 
 #define ITERATION
+#define TIMING
 
-using std::vector, std::queue, std::stack, std::pair;
+using std::vector, std::queue, std::stack, std::pair, std::function, std::bind;
 using std::make_pair;
-using timepoint = std::chrono::_V2::steady_clock::time_point;
 template <class T> using iNode = std::shared_ptr<node<T>>;
 template <class T> using vNodes = vector<iNode<T>>;
+
 
 template <class T>
 class binarytree
 {
 private:
-    void clock();
     void _showTraverse(vNodes<T>&);
     vNodes<T> _preOrderByRecursion(iNode<T>&);
     vNodes<T> _inOrderByRecursion(iNode<T>&);
@@ -31,21 +33,21 @@ private:
 public:
     binarytree(const int, function<bool(const iNode<T>&, const iNode<T>&)>);
     ~binarytree();
-    void createTree(const uint);
+    void createTree(const uint, bool=false);
     uint getLayers(iNode<T>&);
     iNode<T> copyTree(iNode<T>&);
     bool isBalanced(iNode<T>&, uint&);
     bool isSearched(iNode<T>&, iNode<T>&, iNode<T>&);
     bool compareTree(iNode<T>, iNode<T>, bool=false);
     void showTree(iNode<T>&);
-    vNodes<T> level();
-    vNodes<T> preOrder();
-    vNodes<T> inOrder();
-    vNodes<T> postOrder();
-    void buildByPreIn(vNodes<T>&, vNodes<T>&);
-    void buildByInPost(vNodes<T>&, vNodes<T>&);
-    iNode<T> buildMirror();
-    iNode<T> buildBiSearchTree();
+    vNodes<T> level(bool=false);
+    vNodes<T> preOrder(bool=false);
+    vNodes<T> inOrder(bool=false);
+    vNodes<T> postOrder(bool=false);
+    iNode<T> buildByPreIn(vNodes<T>&, vNodes<T>&, bool=false);
+    iNode<T> buildByInPost(vNodes<T>&, vNodes<T>&, bool=false);
+    iNode<T> buildMirror(bool=false);
+    iNode<T> buildBiSearchTree(bool=false);
     void allAlgo();
 private:
     iNode<T> head = nullptr;
@@ -53,24 +55,14 @@ private:
 private:
     const uint DEFAULTSIZE = 1000;
     const uint MAXDATA = 10000;
-    inline timepoint NOW() {return std::chrono::steady_clock::now();}
-    inline std::chrono::nanoseconds USED(timepoint end, timepoint begin) {return std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);}
-    inline void PRINT(const char* func, const std::chrono::nanoseconds time) {printf("\033[33m%-20s%-20.8f\n\033[0m", (func), time.count() * 1e-9);}
-    inline void PRINT(const char* func, const std::chrono::nanoseconds time, bool res) {printf("\033[33m%-20s%-20.8f%-20s\n\033[0m", (func), time.count() * 1e-9, res ? "TRUE" : "FALSE");}
 };
-
-template <class T>
-void binarytree<T>::clock()
-{
-    
-}
 
 template <class T>
 binarytree<T>::binarytree(const int size, function<bool(const iNode<T>&, const iNode<T>&)> cmp)
     : compareNode(cmp)
 {
-    createTree(size <= 10 ? DEFAULTSIZE : size);
-    showTree(head);
+    createTree(size <= 10 ? DEFAULTSIZE : size, true);
+    // showTree(head);
 }
 
 template <class T>
@@ -79,44 +71,44 @@ binarytree<T>::~binarytree()
 }
 
 template <class T>
-void binarytree<T>::createTree(const uint size)
+void binarytree<T>::createTree(const uint size, bool needTiming)
 {
-    auto begin = NOW();
-
-    srand((int)time(0));
-    uint data = rand() % MAXDATA;
-    head.reset(new node<T>(data));
-    vNodes<T> vEnable;
-    vEnable.emplace_back(head);
-
-    for(uint i = 2; i <= size; i++)
+    if(needTiming) {timing(__FUNCTION__, bind(&binarytree::createTree, this, size, false));}
+    else
     {
-        data = rand() % MAXDATA;
-        iNode<T> nextNode(new node<T>(data));
-        uint idx = rand() % vEnable.size();
-        auto pNode = vEnable[idx];
-        if(pNode->getLeft())
+        srand((int)time(0));
+        uint data = rand() % MAXDATA;
+        head.reset(new node<T>(data));
+        vNodes<T> vEnable;
+        vEnable.emplace_back(head);
+
+        for(uint i = 2; i <= size; i++)
         {
-            pNode->setRight(nextNode);
+            data = rand() % MAXDATA;
+            iNode<T> nextNode(new node<T>(data));
+            uint idx = rand() % vEnable.size();
+            auto pNode = vEnable[idx];
+            if(pNode->getLeft())
+            {
+                pNode->setRight(nextNode);
+            }
+            else if(pNode->getRight())
+            {
+                pNode->setLeft(nextNode);
+            }
+            else
+            {
+                uint direction = rand() % 2;
+                direction == 0 ? pNode->setLeft(nextNode) : pNode->setRight(nextNode);
+            }
+            if(pNode->getLeft() && pNode->getRight())
+            {
+                vEnable.erase(vEnable.begin() + idx);
+            }
+            vEnable.emplace_back(nextNode);
         }
-        else if(pNode->getRight())
-        {
-            pNode->setLeft(nextNode);
-        }
-        else
-        {
-            uint direction = rand() % 2;
-            direction == 0 ? pNode->setLeft(nextNode) : pNode->setRight(nextNode);
-        }
-        if(pNode->getLeft() && pNode->getRight())
-        {
-            vEnable.erase(vEnable.begin() + idx);
-        }
-        vEnable.emplace_back(nextNode);
     }
 
-    auto used = USED(NOW(), begin);
-    printf("\033[33m%s\t%.8fs\t%d\t%u\n\033[0m", __FUNCTION__, used.count() * 1e-9, size, getLayers(head));
 }
 
 template <class T>
@@ -324,64 +316,68 @@ void binarytree<T>::_showTraverse(vNodes<T>& res)
 }
 
 template <class T>
-vNodes<T> binarytree<T>::level()
+vNodes<T> binarytree<T>::level(bool needTiming)
 {
-    auto begin = NOW();
-
     vNodes<T> res;
-    queue<iNode<T>> q;
-    q.push(head);
-    while(!q.empty())
+    if(needTiming) 
     {
-        auto n = q.front();
-        q.pop();
-        if(n)
-        {
-            res.emplace_back(n);
-            q.push(n->getLeft());
-            q.push(n->getRight());
-        }
+        res = timingWithRet(__FUNCTION__, bind(&binarytree::level, this, false));
     }
+    else
+    {
+        queue<iNode<T>> q;
+        q.push(head);
+        while(!q.empty())
+        {
+            auto n = q.front();
+            q.pop();
+            if(n)
+            {
+                res.emplace_back(n);
+                q.push(n->getLeft());
+                q.push(n->getRight());
+            }
+        }
 
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used);
-    _showTraverse(res);
+    }
     return res;
 }
 
 template <class T>
-vNodes<T> binarytree<T>::preOrder()
+vNodes<T> binarytree<T>::preOrder(bool needTiming)
 {
-    auto begin = NOW();
-
-#ifdef ITERATION
-
     vNodes<T> res;
-    stack<iNode<T>> st;
-    auto curNode = head;
-    
-    while(curNode || !st.empty())
+    if(needTiming)
     {
-        if(curNode)
+        res = timingWithRet(__FUNCTION__, bind(&binarytree::preOrder, this, false));
+    }
+    else
+    {
+    #ifdef ITERATION
+
+        stack<iNode<T>> st;
+        auto curNode = head;
+        
+        while(curNode || !st.empty())
         {
-            res.emplace_back(curNode);
-            st.push(curNode);
-            curNode = curNode->getLeft();
+            if(curNode)
+            {
+                res.emplace_back(curNode);
+                st.push(curNode);
+                curNode = curNode->getLeft();
+            }
+            else
+            {
+                curNode = st.top()->getRight();
+                st.pop();
+            }
         }
-        else
-        {
-            curNode = st.top()->getRight();
-            st.pop();
-        }
+
+    #else
+        res = _preOrderByRecursion(head);
+    #endif
     }
 
-#else
-    auto res = _preOrderByRecursion(head);
-#endif
-
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used);
-    _showTraverse(res);
     return res;
 }
 
@@ -401,38 +397,40 @@ vNodes<T> binarytree<T>::_preOrderByRecursion(iNode<T>& n)
 }
 
 template <class T>
-vNodes<T> binarytree<T>::inOrder()
+vNodes<T> binarytree<T>::inOrder(bool needTiming)
 {
-    auto begin = NOW();
-
-#ifdef ITERATION
-
     vNodes<T> res;
-    stack<iNode<T>> st;
-    auto curNode = head;
-    
-    while(curNode || !st.empty())
+    if(needTiming)
     {
-        if(curNode)
-        {
-            st.push(curNode);
-            curNode = curNode->getLeft();
-        }
-        else
-        {
-            res.emplace_back(st.top());
-            curNode = st.top()->getRight();
-            st.pop();
-        }
+        res = timingWithRet(__FUNCTION__, bind(&binarytree::inOrder, this, false));
     }
+    else
+    {
+    #ifdef ITERATION
 
-#else
-    auto res = _inOrderByRecursion(head);
-#endif
+        stack<iNode<T>> st;
+        auto curNode = head;
+        
+        while(curNode || !st.empty())
+        {
+            if(curNode)
+            {
+                st.push(curNode);
+                curNode = curNode->getLeft();
+            }
+            else
+            {
+                res.emplace_back(st.top());
+                curNode = st.top()->getRight();
+                st.pop();
+            }
+        }
+
+    #else
+        res = _inOrderByRecursion(head);
+    #endif
+    }
     
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used);
-    _showTraverse(res);
     return res;
 }
 
@@ -452,50 +450,52 @@ vNodes<T> binarytree<T>::_inOrderByRecursion(iNode<T>& n)
 }
 
 template <class T>
-vNodes<T> binarytree<T>::postOrder()
+vNodes<T> binarytree<T>::postOrder(bool needTiming)
 {
-    auto begin = NOW();
-    
-#ifdef ITERATION
-
     vNodes<T> res;
-    stack<iNode<T>> st;
-    auto curNode = head;
-    iNode<T> lastVisit = nullptr;
-    
-    while(curNode || !st.empty())
+    if(needTiming)
     {
-        if(curNode)
+        res = timingWithRet(__FUNCTION__, bind(&binarytree::postOrder, this, false));
+    }
+    else
+    {
+    #ifdef ITERATION
+
+        stack<iNode<T>> st;
+        auto curNode = head;
+        iNode<T> lastVisit = nullptr;
+        
+        while(curNode || !st.empty())
         {
-            st.push(curNode);
-            curNode = curNode->getLeft();
-        }
-        else
-        {
-            curNode = st.top();
-            auto rNode = curNode->getRight();
-            if(rNode && rNode != lastVisit)
+            if(curNode)
             {
-                st.push(rNode);
-                curNode = rNode->getLeft();
+                st.push(curNode);
+                curNode = curNode->getLeft();
             }
             else
             {
-                st.pop();
-                res.emplace_back(curNode);
-                lastVisit = curNode;
-                curNode = nullptr;
+                curNode = st.top();
+                auto rNode = curNode->getRight();
+                if(rNode && rNode != lastVisit)
+                {
+                    st.push(rNode);
+                    curNode = rNode->getLeft();
+                }
+                else
+                {
+                    st.pop();
+                    res.emplace_back(curNode);
+                    lastVisit = curNode;
+                    curNode = nullptr;
+                }
             }
         }
+
+    #else
+        res = _postOrderByRecursion(head);
+    #endif
     }
 
-#else
-    auto res = _postOrderByRecursion(head);
-#endif
-
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used);
-    _showTraverse(res);
     return res;
 }
 
@@ -533,15 +533,19 @@ iNode<T> binarytree<T>::_buildByPreIn(vNodes<T>& vPre, const uint lPre, const ui
 }
 
 template <class T>
-void binarytree<T>::buildByPreIn(vNodes<T>& vPre, vNodes<T>& vIn)
+iNode<T> binarytree<T>::buildByPreIn(vNodes<T>& vPre, vNodes<T>& vIn, bool needTiming)
 {
-    auto begin = NOW();
+    iNode<T> newHead;
+    if(needTiming)
+    {
+        newHead = timingWithRet(__FUNCTION__, bind(&binarytree::buildByPreIn, this, vPre, vIn, false));
+    }
+    else
+    {
+        newHead = _buildByPreIn(vPre, 0, vPre.size() - 1, vIn, 0, vIn.size() - 1);
+    }
 
-    auto newHead = _buildByPreIn(vPre, 0, vPre.size() - 1, vIn, 0, vIn.size() - 1);
-
-    auto used = USED(NOW(), begin);
-    bool res = compareTree(newHead, head);
-    PRINT(__FUNCTION__, used, res);
+    return newHead;
 }
 
 template <class T>
@@ -563,56 +567,63 @@ iNode<T> binarytree<T>::_buildByInPost(vNodes<T>& vIn, const uint lIn, const uin
 }
 
 template <class T>
-void binarytree<T>::buildByInPost(vNodes<T>& vIn, vNodes<T>& vPost)
+iNode<T> binarytree<T>::buildByInPost(vNodes<T>& vIn, vNodes<T>& vPost, bool needTiming)
 {
-    auto begin = NOW();
+    iNode<T> newHead;
+    if(needTiming)
+    {
+        newHead = timingWithRet(__FUNCTION__, bind(&binarytree::buildByInPost, this, vIn, vPost, false));
+    }
+    else
+    {
+        newHead = _buildByInPost(vIn, 0, vIn.size() - 1, vPost, 0, vPost.size() - 1);
+    }
 
-    auto newHead = _buildByInPost(vIn, 0, vIn.size() - 1, vPost, 0, vPost.size() - 1);
-
-    auto used = USED(NOW(), begin);
-    bool res = compareTree(newHead, head);
-    PRINT(__FUNCTION__, used, res);
+    return newHead;
 }
 
 template <class T>
-iNode<T> binarytree<T>::buildMirror()
+iNode<T> binarytree<T>::buildMirror(bool needTiming)
 {
-    auto begin = NOW();
-
-#ifdef ITERATION
-
-    queue<iNode<T>> q;
-    iNode<T> retNode(new node<T>(head));
-    q.push(retNode);
-    while(!q.empty())
+    iNode<T> retNode;
+    if(needTiming)
     {
-        auto curNode = q.front();
-        q.pop();
-        if(!curNode->getOrigin())
+        retNode = timingWithRet(__FUNCTION__, bind(&binarytree::buildMirror, this, false));
+    }
+    else
+    {
+    #ifdef ITERATION
+
+        queue<iNode<T>> q;
+        retNode.reset(new node<T>(head));
+        q.push(retNode);
+        while(!q.empty())
         {
-            continue;
+            auto curNode = q.front();
+            q.pop();
+            if(!curNode->getOrigin())
+            {
+                continue;
+            }
+            if(curNode->getOrigin()->getRight())
+            {
+                iNode<T> left(new node<T>(curNode->getOrigin()->getRight()));
+                curNode->setLeft(left);
+                q.push(left);
+            }
+            if(curNode->getOrigin()->getLeft())
+            {
+                iNode<T> right(new node<T>(curNode->getOrigin()->getLeft()));
+                curNode->setRight(right);
+                q.push(right);
+            }
         }
-        if(curNode->getOrigin()->getRight())
-        {
-            iNode<T> left(new node<T>(curNode->getOrigin()->getRight()));
-            curNode->setLeft(left);
-            q.push(left);
-        }
-        if(curNode->getOrigin()->getLeft())
-        {
-            iNode<T> right(new node<T>(curNode->getOrigin()->getLeft()));
-            curNode->setRight(right);
-            q.push(right);
-        }
+
+    #else
+        retNode = _buildMirrorByRecursion(head);
+    #endif
     }
 
-#else
-    auto retNode = _buildMirrorByRecursion(head);
-#endif
-
-    auto used = USED(NOW(), begin);
-    bool res = compareTree(retNode, head, true);
-    PRINT(__FUNCTION__, used, res);
     return retNode;
 }
 
@@ -631,18 +642,22 @@ iNode<T> binarytree<T>::_buildMirrorByRecursion(iNode<T>& n)
 }
 
 template <class T>
-iNode<T> binarytree<T>::buildBiSearchTree()
+iNode<T> binarytree<T>::buildBiSearchTree(bool needTiming)
 {
-    auto begin = NOW();
+    iNode<T> retNode;
+    if(needTiming)
+    {
+        retNode = timingWithRet(__FUNCTION__, bind(&binarytree::buildBiSearchTree, this, false));
+    }
+    else
+    {
+        retNode = copyTree(head);
+        auto vIn = inOrder();
+        std::sort(vIn.begin(), vIn.end(), compareNode);
+        uint idx = 0;
+        _resetDatas(retNode, vIn, idx);
+    }
 
-    auto retNode = copyTree(head);
-    auto vIn = inOrder();
-    std::sort(vIn.begin(), vIn.end(), compareNode);
-    uint idx = 0;
-    _resetDatas(retNode, vIn, idx);
-
-    auto used = USED(NOW(), begin);
-    PRINT(__FUNCTION__, used);
     return retNode;
 }
 
@@ -663,13 +678,13 @@ template <class T>
 void binarytree<T>::allAlgo()
 {
     printf("\033[4;31m%-20s%-20s\n\033[0m", "FUNCTION", "USED_TIME(s)");
-    auto vLevel = level();
-    auto vPre = preOrder();
-    auto vIn = inOrder();
-    auto vPost = postOrder();
+    auto vLevel = level(true);
+    auto vPre = preOrder(true);
+    auto vIn = inOrder(true);
+    auto vPost = postOrder(true);
     printf("\033[4;31m%-20s%-20s%-20s\n\033[0m", "FUNCTION", "USED_TIME(s)", "RESULT");
-    buildByPreIn(vPre, vIn);
-    buildByInPost(vIn, vPost);
-    buildMirror();
-    buildBiSearchTree();
+    buildByPreIn(vPre, vIn, true);
+    buildByInPost(vIn, vPost, true);
+    buildMirror(true);
+    buildBiSearchTree(true);
 }
